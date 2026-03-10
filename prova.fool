@@ -1,5 +1,5 @@
 let
-  var x:int = 5;
-  var y:int = 10;
+  var x:int = 10;
+  var y:int = 5;
 in
-  print( (x + y) * 2 );
+  print( (x / 2) == y );
