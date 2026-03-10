@@ -1,9 +1,11 @@
 // Generated from C:/Users/aless/Desktop/LM/LCMC/project/FOOL_LCMC/compiler/FOOL.g4 by ANTLR 4.13.2
 package compiler;
-import org.antlr.v4.runtime.Lexer;
-import org.antlr.v4.runtime.CharStream;
+
 import org.antlr.v4.runtime.*;
-import org.antlr.v4.runtime.atn.*;
+import org.antlr.v4.runtime.atn.ATN;
+import org.antlr.v4.runtime.atn.ATNDeserializer;
+import org.antlr.v4.runtime.atn.LexerATNSimulator;
+import org.antlr.v4.runtime.atn.PredictionContextCache;
 import org.antlr.v4.runtime.dfa.DFA;
 
 @SuppressWarnings({"all", "warnings", "unchecked", "unused", "cast", "CheckReturnValue", "this-escape"})
@@ -124,7 +126,7 @@ public class FOOLLexer extends Lexer {
 	private void ERR_action(RuleContext _localctx, int actionIndex) {
 		switch (actionIndex) {
 		case 0:
-			 System.out.println("Invalid char "+getText()+" at line "+getLine()); lexicalErrors++; 
+			 System.out.println("Invalid char: "+ getText() +" at line "+getLine()); lexicalErrors++; 
 			break;
 		}
 	}
