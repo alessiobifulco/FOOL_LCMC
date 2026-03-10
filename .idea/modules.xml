@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/FOOL_LCMC.iml" filepath="$PROJECT_DIR$/.idea/FOOL_LCMC.iml" />
+      <module fileurl="file://$PROJECT_DIR$/FOOL_LCMC.iml" filepath="$PROJECT_DIR$/FOOL_LCMC.iml" />
     </modules>
   </component>
 </project>
