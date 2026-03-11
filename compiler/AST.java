@@ -251,10 +251,12 @@ public class AST {
 
 		final String id;
 		final List<FieldNode> fields;
+        final List<MethodNode> methods;
 
-		public ClassNode(final String id, final List<FieldNode> fields) {
+		public ClassNode(final String id, final List<FieldNode> fields, final List<MethodNode> methods) {
 			this.id = id;
 			this.fields = fields;
+            this.methods = methods;
 		}
 
 		@Override

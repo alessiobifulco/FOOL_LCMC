@@ -220,16 +220,38 @@ public class ASTGenerationSTVisitor extends FOOLBaseVisitor<Node> {
 	public Node visitCldec(CldecContext c) {
 		if (print) printVarAndProdName(c);
 		// check if class has 'extends' in which case field IDs start from index 2
-		List<FieldNode> fieldList = new ArrayList<>();
+		final List<FieldNode> fieldList = new ArrayList<>();
 		for (int i = 1; i < c.ID().size(); i++) {
 			final FieldNode field = new FieldNode(c.ID(i).getText(), (TypeNode)visit(c.type(i)));
 			field.setLine(c.ID(i).getSymbol().getLine());
 			fieldList.add(field);
 		}
 		// Methods
-
-		Node n = new ClassNode(c.ID(0).getText(), fieldList);
+		final List<MethodNode> methodList = new ArrayList<>();
+		for (int i = 0; i < c.methdec().size(); i++) {
+			methodList.add((MethodNode) visit(c.methdec(i)));
+		}
+		Node n = new ClassNode(c.ID(0).getText(), fieldList, methodList);
 		n.setLine(c.ID(0).getSymbol().getLine());
+		return n;
+	}
+
+	@Override
+	public Node visitMethdec(MethdecContext c) {
+		if (print) printVarAndProdName(c);
+		final List<ParNode> paramList = new ArrayList<>();
+		for (int i = 1; i < c.ID().size(); i++) {
+			final ParNode parameter = new ParNode(c.ID(i).getText(), (TypeNode)visit(c.type(i)));
+			parameter.setLine(c.ID(i).getSymbol().getLine());
+			paramList.add(parameter);
+		}
+		final List<DecNode> decList = new ArrayList<>();
+		for (DecContext dec : c.dec()) decList.add((DecNode) visit(dec));
+		Node n = null;
+		if (!c.ID().isEmpty()) { //non-incomplete ST
+			n = new MethodNode(c.ID(0).getText(),(TypeNode)visit(c.type(0)), paramList, decList, visit(c.exp()));
+			n.setLine(c.FUN().getSymbol().getLine());
+		}
 		return n;
 	}
 }
