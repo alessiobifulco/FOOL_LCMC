@@ -264,4 +264,34 @@ public class AST {
 	}
 
 	// MethodNode e' uguale a FunNode
+    public static class MethodNode extends DecNode {
+
+        final String id;
+        final List<ParNode> parlist;
+        final List<DecNode> declist;
+        final Node exp;
+
+        public MethodNode(String i, TypeNode t, List<ParNode> p, List<DecNode> d, Node e) {
+            this.id = i;
+            this.type = t;
+            this.parlist = p;
+            this.declist = d;
+            this.exp = e;
+        }
+        @Override
+        public <S,E extends Exception> S accept(BaseASTVisitor<S,E> visitor) throws E {return visitor.visitNode(this);}
+    }
+
+    public static class NewNode extends Node {
+
+        final String classId;
+        final List<Node> argList;
+
+        public NewNode(String c, List<Node> a) {
+            this.classId = c;
+            this.argList = a;
+        }
+        @Override
+        public <S,E extends Exception> S accept(BaseASTVisitor<S,E> visitor) throws E {return visitor.visitNode(this);}
+    }
 }
