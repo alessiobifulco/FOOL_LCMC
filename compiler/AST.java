@@ -233,4 +233,35 @@ public class AST {
         public <S,E extends Exception> S accept(BaseASTVisitor<S,E> visitor) throws E {return visitor.visitNode(this);}
     }
 
+	public static class FieldNode extends DecNode {
+		final String id;
+
+		public FieldNode(final String id, final TypeNode type) {
+			this.id = id;
+			this.type = type;
+		}
+
+		@Override
+		public <S, E extends Exception> S accept(BaseASTVisitor<S, E> visitor) throws E {
+			return visitor.visitNode(this);
+		}
+	}
+
+	public static class ClassNode extends Node {
+
+		final String id;
+		final List<FieldNode> fields;
+
+		public ClassNode(final String id, final List<FieldNode> fields) {
+			this.id = id;
+			this.fields = fields;
+		}
+
+		@Override
+		public <S, E extends Exception> S accept(BaseASTVisitor<S, E> visitor) throws E {
+			return visitor.visitNode(this);
+		}
+	}
+
+	// MethodNode e' uguale a FunNode
 }
