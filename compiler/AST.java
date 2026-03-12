@@ -272,6 +272,7 @@ public class AST {
         final List<ParNode> parlist;
         final List<DecNode> declist;
         final Node exp;
+		int offset;
 
         public MethodNode(String i, TypeNode t, List<ParNode> p, List<DecNode> d, Node e) {
             this.id = i;
@@ -296,4 +297,20 @@ public class AST {
         @Override
         public <S,E extends Exception> S accept(BaseASTVisitor<S,E> visitor) throws E {return visitor.visitNode(this);}
     }
+
+	public static class ClassTypeNode extends TypeNode {
+
+		final List<TypeNode> allFields;
+		final List<ArrowTypeNode> allMethods;
+
+		public ClassTypeNode(final List<TypeNode> fields, final List<ArrowTypeNode> methods) {
+			this.allFields = fields;
+			this.allMethods = methods;
+		}
+
+		@Override
+		public <S, E extends Exception> S accept(BaseASTVisitor<S, E> visitor) throws E {
+			return visitor.visit(this);
+		}
+	}
 }
