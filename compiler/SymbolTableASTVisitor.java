@@ -292,4 +292,50 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
         }
         return null;
     }
+
+	@Override
+	public Void visitNode(ClassCallNode classCallNode){
+		if(print){
+			printNode(classCallNode);
+		}
+		STentry entry = stLookup(classCallNode.id1);
+		if(entry == null){
+			System.out.println("Object id " + classCallNode.id1 + " at line " + classCallNode.getLine() + " not declared");
+			stErrors++;
+		} else {
+			classCallNode.entry = entry;
+			classCallNode.nl = nestingLevel;
+
+			if (entry.type instanceof RefTypeNode) {
+				String className = ((RefTypeNode) entry.type).id;
+				Map<String, STentry> virtualTable = classTable.get(className);
+
+				if (virtualTable != null) {
+					STentry methodEntry = virtualTable.get(classCallNode.id2);
+					if (methodEntry == null) {
+						System.out.println("Method id " + classCallNode.id2 + " at line " + classCallNode.getLine() + " not declared in class " + className);
+						stErrors++;
+					} else {
+						classCallNode.methodEntry = methodEntry;
+					}
+				}
+			} else {
+				System.out.println("Id " + classCallNode.id1 + " at line " + classCallNode.getLine() + " is not an object (RefTypeNode)");
+				stErrors++;
+			}
+		}
+
+		for (Node arg : classCallNode.arglist) {
+			visit(arg);
+		}
+		return null;
+	}
+
+	@Override
+	public Void visitNode(EmptyNode n) {
+		if (print) {
+			printNode(n);
+		}
+		return null;
+	}
 }
