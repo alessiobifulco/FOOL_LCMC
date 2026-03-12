@@ -296,4 +296,39 @@ public class AST {
         @Override
         public <S,E extends Exception> S accept(BaseASTVisitor<S,E> visitor) throws E {return visitor.visitNode(this);}
     }
+
+    public static class ClassCallNode extends Node {
+        final String id1;
+        final String id2;
+        final List<Node> arglist;
+        STentry entry;
+        STentry methodEntry;
+        int nl;
+
+        public ClassCallNode(String id1, String id2, List<Node> arglist) {
+            this.id1 = id1;
+            this.id2 = id2;
+            this.arglist = Collections.unmodifiableList(arglist);
+        }
+        @Override
+        public <S,E extends Exception> S accept(BaseASTVisitor<S,E> visitor) throws E {return visitor.visitNode(this);}
+    }
+
+    public static class EmptyNode extends Node {
+        @Override
+        public <S,E extends Exception> S accept(BaseASTVisitor<S,E> visitor) throws E {return visitor.visitNode(this);}
+    }
+
+    public static class RefTypeNode extends TypeNode {
+        final String id;
+        public RefTypeNode(String i) {
+            this.id = i; }
+        @Override
+        public <S,E extends Exception> S accept(BaseASTVisitor<S,E> visitor) throws E {return visitor.visitNode(this);}
+    }
+
+    public static class EmptyTypeNode extends TypeNode {
+        @Override
+        public <S,E extends Exception> S accept(BaseASTVisitor<S,E> visitor) throws E {return visitor.visitNode(this);}
+    }
 }
