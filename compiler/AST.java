@@ -289,6 +289,7 @@ public class AST {
 
         final String classId;
         final List<Node> argList;
+        STentry entry;
 
         public NewNode(String c, List<Node> a) {
             this.classId = c;

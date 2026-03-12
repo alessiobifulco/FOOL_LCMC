@@ -275,4 +275,21 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 		this.decOffset++;
 		return null;
 	}
+
+    public Void visitNode(NewNode newNode) {
+        if (print) {
+            printNode(newNode);
+        }
+        STentry entry = symTable.getFirst().get(newNode.classId);
+        if (entry == null) {
+            System.out.println("NewNode id" + newNode.classId + " at line "+ newNode.getLine() + " not declared");
+            stErrors++;
+        } else {
+            newNode.entry = entry;
+        }
+        for (var elem: newNode.argList){
+            visit(elem);
+        }
+        return null;
+    }
 }
