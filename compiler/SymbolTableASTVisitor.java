@@ -53,12 +53,11 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 		if (hm.put(funNode.id, entry) != null) {
 			System.out.println("Fun id " + funNode.id + " at line "+ funNode.getLine() +" already declared");
 			stErrors++;
-		} 
-		//creare una nuova hashmap per la symTable
+		}
 		nestingLevel++;
 		Map<String, STentry> hmn = new HashMap<>();
 		symTable.add(hmn);
-		int prevNLDecOffset=decOffset; // stores counter for offset of declarations at previous nesting level 
+		int prevNLDecOffset=decOffset;
 		decOffset=-2;
 		
 		int parOffset=1;
@@ -71,7 +70,7 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 		visit(funNode.exp);
 		//rimuovere la hashmap corrente poiche' esco dallo scope               
 		symTable.remove(nestingLevel--);
-		decOffset=prevNLDecOffset; // restores counter for offset of declarations at previous nesting level 
+		decOffset=prevNLDecOffset;
 		return null;
 	}
 	
@@ -81,7 +80,6 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 		visit(n.exp);
 		Map<String, STentry> hm = symTable.get(nestingLevel);
 		STentry entry = new STentry(nestingLevel,n.getType(),decOffset--);
-		//inserimento di ID nella symtable
 		if (hm.put(n.id, entry) != null) {
 			System.out.println("Var id " + n.id + " at line "+ n.getLine() +" already declared");
 			stErrors++;
