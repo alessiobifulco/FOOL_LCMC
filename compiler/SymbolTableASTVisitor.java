@@ -223,6 +223,7 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
         return null;
     }
 
+    @Override
 	public Void visitNode(ClassNode classNode) {
 		final ClassTypeNode classType = new ClassTypeNode(new ArrayList<>(), new ArrayList<>());
 		this.symTable.getFirst().put(classNode.id, new STentry(nestingLevel, classType, decOffset--));
@@ -261,6 +262,7 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 		return null;
 	}
 
+    @Override
 	public Void visitNode(MethodNode methodNode) {
 		if (print) {
 			printNode(methodNode);
@@ -276,6 +278,7 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 		return null;
 	}
 
+    @Override
     public Void visitNode(NewNode newNode) {
         if (print) {
             printNode(newNode);
@@ -288,6 +291,39 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
             newNode.entry = entry;
         }
         for (var elem: newNode.argList){
+            visit(elem);
+        }
+        return null;
+    }
+
+    @Override
+    public Void visitNode(ClassCallNode classCallNode) {
+
+        if (print) {
+            printNode(classCallNode);
+        }
+
+        STentry entryId1 = stLookup(classCallNode.id1);
+        if (entryId1 == null) {
+            System.out.println("ClassCallNide id1" + classCallNode.id1 + " at line " + classCallNode.getLine() + " not declared");
+            stErrors++;
+
+        } else if (entryId1.type instanceof RefTypeNode) {
+
+            classCallNode.entry = entryId1;
+            classCallNode.nl = this.nestingLevel;
+            classCallNode.methodEntry = classTable.get(((RefTypeNode) entryId1.type).id).get(classCallNode.id2);
+
+            if (classCallNode.methodEntry == null) {
+                System.out.println("Id1 " + classCallNode.id1 + " at line " + classCallNode.getLine() + " has no method " + classCallNode.id2);
+                stErrors++;
+            }
+
+        } else {
+            System.out.println("Id1 " + classCallNode.id1 + " at line " + classCallNode.getLine() + " is not an object");
+            stErrors++;
+        }
+        for (var elem : classCallNode.arglist) {
             visit(elem);
         }
         return null;
