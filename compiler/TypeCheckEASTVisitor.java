@@ -3,6 +3,9 @@ package compiler;
 import compiler.AST.*;
 import compiler.exc.*;
 import compiler.lib.*;
+
+import java.util.List;
+
 import static compiler.TypeRels.*;
 
 //visitNode(n) fa il type checking di un Node n e ritorna:
@@ -235,5 +238,59 @@ public class TypeCheckEASTVisitor extends BaseEASTVisitor<TypeNode,TypeException
             throw new TypeException("Non boolean in NOT operation", n.getLine());
         return new BoolTypeNode();
     }
+
+	@Override
+	public TypeNode visitNode(final ClassNode n) throws TypeException {
+		if (print) {
+			printNode(n);
+		}
+		// Visit all class methods
+		for (final var method: n.methods) {
+			visit(method);
+		}
+		return null;
+	}
+
+	@Override
+	public TypeNode visitNode(final MethodNode n) throws TypeException {
+		if (print) {
+			printNode(n);
+		}
+		n.declist.forEach(dec -> {
+			try {
+				// Visits declaration of each method
+				visit(dec);
+			} catch (final IncomplException e) {
+
+			} catch (final TypeException e) {
+				System.out.println("Type checking error in declaration: " + e.text);
+			}
+		});
+		// Checks return type of method
+		if (!isSubtype(visit(n.exp), ckvisit(n.getType()))) {
+			throw new TypeException("Wrong return type for method: " + n.id, n.getLine());
+		}
+		return null;
+	}
+
+	@Override
+	public TypeNode visitNode(final NewNode n) throws TypeException {
+		if (print) {
+			this.printNode(n);
+		}
+		final List<TypeNode> fields = ((ClassTypeNode) n.entry.type).allFields; // list of fields type
+		// if number of parameters is different from expected
+		if (n.argList.size() != fields.size()) {
+			throw new TypeException("Wrong number of parameters for new instance of class: " + n.classId, n.getLine());
+		}
+		for (var i = 0; i < fields.size(); i++) {
+			// checks that every param type given is subtype of expected
+			if (!isSubtype(visit(n.argList.get(i)), fields.get(i))) {
+				throw new TypeException("Wrong type of " + (i + 1) + " parameter in invocation of " + n.classId, n.getLine());
+			}
+		}
+		// returns a reference type with visited class id
+		return new RefTypeNode(n.classId);
+	}
 
 }
