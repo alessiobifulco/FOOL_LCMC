@@ -3,12 +3,18 @@ package compiler;
 import compiler.AST.*;
 import compiler.lib.*;
 import compiler.exc.*;
+
+import java.util.ArrayList;
+import java.util.List;
+
 import static compiler.lib.FOOLlib.*;
 
 public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidException> {
 
-  CodeGenerationASTVisitor() {}
-  CodeGenerationASTVisitor(boolean debug) {super(false,debug);} //enables print for debugging
+	List<List<String>> dispatchTables = new ArrayList<>();
+
+  	CodeGenerationASTVisitor() {}
+  	CodeGenerationASTVisitor(boolean debug) {super(false,debug);} //enables print for debugging
 
 	@Override
 	public String visitNode(ProgLetInNode n) {
@@ -272,4 +278,65 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
                 l2+":"
         );
     }
+
+	@Override
+	public String visitNode(final MethodNode n) {
+		if (print) {
+			printNode(n);
+		}
+		n.label = freshLabel();
+		String declCode = null, popDecl = null, popParl = null;
+		for (Node dec : n.declist) {
+			declCode = nlJoin(declCode, visit(dec));
+			popDecl = nlJoin(popDecl,"pop");
+		}
+		for (int i = 0; i < n.parlist.size(); i++) popParl = nlJoin(popParl,"pop");
+		String funl = freshFunLabel();
+		putCode(
+				nlJoin(
+						funl+":",
+						"cfp", // set $fp to $sp value
+						"lra", // load $ra value
+						declCode, // generate code for local declarations (they use the new $fp!!!)
+						visit(n.exp), // generate code for function body expression
+						"stm", // set $tm to popped value (function result)
+						popDecl, // remove local declarations from stack
+						"sra", // set $ra to popped value
+						"pop", // remove Access Link from stack
+						popParl, // remove parameters from stack
+						"sfp", // set $fp to popped value (Control Link)
+						"ltm", // load $tm value (function result)
+						"lra", // load $ra value
+						"js"  // jump to popped address
+				)
+		);
+		return null;
+	}
+
+	@Override
+	public String visitNode(final ClassNode n) {
+		final List<String> dispatchTable = new ArrayList<>();
+		this.dispatchTables.add(dispatchTable);
+		for (int i = 0; i < n.methods.size(); i++) {
+			visit(n.methods.get(i));
+			dispatchTable.add(n.methods.get(i).label);
+		}
+		String dispatchTableCreation = null;
+		for (var label: dispatchTable) {
+			dispatchTableCreation = nlJoin(
+					dispatchTableCreation,
+					"push " + label,
+					"lhp",
+					"sw", // saves label into memory address pointed to by $hp
+					"lhp",
+					"push 1",
+					"add",
+					"shp" // increments $hp by 1
+			);
+		}
+		return nlJoin(
+				"lhp",
+				dispatchTableCreation
+		);
+	}
 }

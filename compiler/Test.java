@@ -25,12 +25,12 @@ public class Test {
 
     	System.out.println("Generating AST.");
     	ASTGenerationSTVisitor visitor = new ASTGenerationSTVisitor(); // use true to visualize the ST
-    	Node ast = visitor.visit(st);
+    	Node ast = visitor.visit(st); // generates ast from st via recursive visit on prog node
     	System.out.println("");
 
     	System.out.println("Enriching AST via symbol table.");
     	SymbolTableASTVisitor symtableVisitor = new SymbolTableASTVisitor();
-    	symtableVisitor.visit(ast);
+    	symtableVisitor.visit(ast); // generates symbol table from ast via recursive visit on prog node
     	System.out.println("You had "+symtableVisitor.stErrors+" symbol table errors.\n");
 
     	System.out.println("Visualizing Enriched AST.");
