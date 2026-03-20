@@ -318,12 +318,47 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
         );
     }
 
+//    @Override
+//    public String visitNode(final MethodNode n) {
+//        if (print) {
+//            printNode(n);
+//        }
+//        n.label = freshLabel();
+//        String declCode = null, popDecl = null, popParl = null;
+//        for (Node dec : n.declist) {
+//            declCode = nlJoin(declCode, visit(dec));
+//            popDecl = nlJoin(popDecl,"pop");
+//        }
+//        for (int i = 0; i < n.parlist.size(); i++) popParl = nlJoin(popParl,"pop");
+//
+//        String funl = freshFunLabel();
+//        putCode(
+//                nlJoin(
+//                        funl+":",
+//                        "cfp", // set $fp to $sp value
+//                        "lra", // load $ra value
+//                        declCode, // generate code for local declarations (they use the new $fp!!!)
+//                        visit(n.exp), // generate code for function body expression
+//                        "stm", // set $tm to popped value (function result)
+//                        popDecl, // remove local declarations from stack
+//                        "sra", // set $ra to popped value
+//                        "pop", // remove Access Link from stack
+//                        popParl, // remove parameters from stack
+//                        "sfp", // set $fp to popped value (Control Link)
+//                        "ltm", // load $tm value (function result)
+//                        "lra", // load $ra value
+//                        "js"  // jump to popped address
+//                )
+//        );
+//        return null;
+//    }
+
     @Override
     public String visitNode(final MethodNode n) {
         if (print) {
             printNode(n);
         }
-        n.label = freshLabel();
+        n.label = freshFunLabel();
         String declCode = null, popDecl = null, popParl = null;
         for (Node dec : n.declist) {
             declCode = nlJoin(declCode, visit(dec));
@@ -331,10 +366,9 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
         }
         for (int i = 0; i < n.parlist.size(); i++) popParl = nlJoin(popParl,"pop");
 
-        String funl = freshFunLabel();
         putCode(
                 nlJoin(
-                        funl+":",
+                        n.label+":",
                         "cfp", // set $fp to $sp value
                         "lra", // load $ra value
                         declCode, // generate code for local declarations (they use the new $fp!!!)
@@ -389,34 +423,36 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
     }
 
     @Override
-    public String visitNode(final ClassCallNode n) {
-        String argCode = null; // argument code accumulate assembly code
-        String getAR = null;   // get active record
+    public String visitNode(ClassCallNode node) {
         if (print) {
-            printNode(n, n.id1 + "." + n.id2);
+            printNode(node, node.id1 + "." + node.id2); //id1 for objid and id2 for methodid
         }
-        for (int i = n.arglist.size() - 1; i >= 0; i--) {
-            argCode = nlJoin(argCode, visit(n.arglist.get(i)));
+
+        String getActivationRecordCode = null;
+        for (int i = 0; i < node.nl - node.entry.nl; i++) {
+            getActivationRecordCode = nlJoin(getActivationRecordCode, "lw");
         }
-        for (int i = 0; i < n.nl - n.entry.nl; i++) {
-            getAR = nlJoin(getAR, "lw");
+
+        String argumentsCode = null;
+        for (int i = node.arglist.size() - 1; i >= 0; i--) {
+            argumentsCode = nlJoin(argumentsCode, visit(node.arglist.get(i)));
         }
+
         return nlJoin(
-                "lfp",
-                argCode,
-                "lfp",
-                getAR,
-                "push " + n.entry.offset,
+                "lfp", // load Control Link (pointer to frame of function "id" caller)
+                argumentsCode, // generate code for argument expxs in reversed order
+                "lfp", getActivationRecordCode, // retrieve address of frame containing "id" declaration
+                // by following the static chain (of Access Links)
+                "push " + node.entry.offset, // offset where to find the object pointer
                 "add",
+                "lw", // put the objectPointer
+                "stm", // set $tm to popped val (with the aim of duplicating top of stack)
+                "ltm", // load Access Link (pointer to frame of function "id" declaration)
+                "ltm", // duplicate top of stack
                 "lw",
-                "stm",
-                "ltm",
-                "ltm",
-                "lw",
-                "push " + n.methodEntry.offset,
-                "add",
-                "lw",
-                "js"
+                "push " + node.methodEntry.offset, "add", // compute address of "id" declaration
+                "lw", // load address of "id" function
+                "js"  // jump to popped address (saving address of subsequent instruction in $ra)
         );
     }
 

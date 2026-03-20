@@ -223,60 +223,148 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
         return null;
     }
 
+//    @Override
+//	public Void visitNode(ClassNode classNode) {
+//		final ClassTypeNode classType = new ClassTypeNode(new ArrayList<>(), new ArrayList<>());
+//		this.symTable.getFirst().put(classNode.id, new STentry(nestingLevel, classType, decOffset--));
+//		this.classTable.put(classNode.id, new HashMap<>());
+//		this.nestingLevel++;
+//		final Map<String, STentry> classMap = this.classTable.get(classNode.id);
+//		if (this.symTable.getFirst().containsKey(classNode.id)) {
+//			System.out.println("Class id " + classNode.id + " at line "+ classNode.getLine() +" already declared");
+//			this.stErrors++;
+//		}
+//
+//		this.symTable.add(classMap);
+//		final int prevDecOffset = this.decOffset;
+//		int fieldOffset = -1;
+//		this.decOffset = 0;
+//		for (var field : classNode.fields) {
+//			if (classMap.containsKey(field.id)) {
+//				System.out.println("Field id " + field.id + " at line "+ field.getLine() +" already declared");
+//				this.stErrors++;
+//			}
+//
+//			classMap.put(field.id, new STentry(this.nestingLevel, field.getType(), fieldOffset--));
+//			classType.allFields.add(field.getType());
+//		}
+//		for (var method : classNode.methods) {
+//			if (classMap.containsKey(method.id)) {
+//				System.out.println("Field id " + method.id + " at line "+ method.getLine() +" already declared");
+//				this.stErrors++;
+//			}
+//			visitNode(method);
+//			classType.allMethods.add((ArrowTypeNode) method.getType());
+//		}
+//		this.symTable.remove(this.nestingLevel);
+//		this.nestingLevel--;
+//		this.decOffset = prevDecOffset;
+//		return null;
+//	}
+
     @Override
-	public Void visitNode(ClassNode classNode) {
-		final ClassTypeNode classType = new ClassTypeNode(new ArrayList<>(), new ArrayList<>());
-		this.symTable.getFirst().put(classNode.id, new STentry(nestingLevel, classType, decOffset--));
-		this.classTable.put(classNode.id, new HashMap<>());
-		this.nestingLevel++;
-		final Map<String, STentry> classMap = this.classTable.get(classNode.id);
-		if (this.symTable.getFirst().containsKey(classNode.id)) {
-			System.out.println("Class id " + classNode.id + " at line "+ classNode.getLine() +" already declared");
-			this.stErrors++;
-		}
+    public Void visitNode(ClassNode classNode) {
+        if (print) printNode(classNode);
 
-		this.symTable.add(classMap);
-		final int prevDecOffset = this.decOffset;
-		int fieldOffset = -1;
-		this.decOffset = 0;
-		for (var field : classNode.fields) {
-			if (classMap.containsKey(field.id)) {
-				System.out.println("Field id " + field.id + " at line "+ field.getLine() +" already declared");
-				this.stErrors++;
-			}
+        final ClassTypeNode classType = new ClassTypeNode(new ArrayList<>(), new ArrayList<>());
 
-			classMap.put(field.id, new STentry(this.nestingLevel, field.getType(), fieldOffset--));
-			classType.allFields.add(field.getType());
-		}
-		for (var method : classNode.methods) {
-			if (classMap.containsKey(method.id)) {
-				System.out.println("Field id " + method.id + " at line "+ method.getLine() +" already declared");
-				this.stErrors++;
-			}
-			visitNode(method);
-			classType.allMethods.add((ArrowTypeNode) method.getType());
-		}
-		this.symTable.remove(this.nestingLevel);
-		this.nestingLevel--;
-		this.decOffset = prevDecOffset;
-		return null;
-	}
+        if (this.symTable.getFirst().containsKey(classNode.id)) {
+            System.out.println("Class id " + classNode.id + " at line " + classNode.getLine() + " already declared");
+            this.stErrors++;
+        } else {
+            this.symTable.getFirst().put(classNode.id, new STentry(nestingLevel, classType, decOffset--));
+            this.classTable.put(classNode.id, new HashMap<>());
+        }
+
+        this.nestingLevel++;
+        final Map<String, STentry> classMap = this.classTable.get(classNode.id);
+        this.symTable.add(classMap);
+
+        final int prevDecOffset = this.decOffset;
+        int fieldOffset = -1;
+        this.decOffset = 0;
+
+        for (var field : classNode.fields) {
+            if (classMap.containsKey(field.id)) {
+                System.out.println("Field id " + field.id + " at line " + field.getLine() + " already declared");
+                this.stErrors++;
+            }
+            classMap.put(field.id, new STentry(this.nestingLevel, field.getType(), fieldOffset--));
+            classType.allFields.add(field.getType());
+        }
+
+        for (var method : classNode.methods) {
+            if (classMap.containsKey(method.id)) {
+                System.out.println("Method id " + method.id + " at line " + method.getLine() + " already declared");
+                this.stErrors++;
+            }
+            visitNode(method);
+            STentry methodEntry = classMap.get(method.id);
+            classType.allMethods.add((ArrowTypeNode) methodEntry.type);
+        }
+
+        this.symTable.remove(this.nestingLevel);
+        this.nestingLevel--;
+        this.decOffset = prevDecOffset;
+
+        return null;
+    }
+
+//    @Override
+//	public Void visitNode(MethodNode methodNode) {
+//		if (print) {
+//			printNode(methodNode);
+//		}
+//		final Map<String, STentry> virtualTable = this.symTable.get(this.nestingLevel);
+//		final List<TypeNode> parameterTypes = new ArrayList<>();
+//		methodNode.parlist.forEach(x -> parameterTypes.add(x.getType()));
+//		final ArrowTypeNode methodType = new ArrowTypeNode(parameterTypes, methodNode.getType());
+//		final STentry methodEntry = new STentry(this.nestingLevel, methodType, this.decOffset);
+//		virtualTable.put(methodNode.id, methodEntry);
+//		methodNode.offset = this.decOffset;
+//		this.decOffset++;
+//		return null;
+//	}
 
     @Override
-	public Void visitNode(MethodNode methodNode) {
-		if (print) {
-			printNode(methodNode);
-		}
-		final Map<String, STentry> virtualTable = this.symTable.get(this.nestingLevel);
-		final List<TypeNode> parameterTypes = new ArrayList<>();
-		methodNode.parlist.forEach(x -> parameterTypes.add(x.getType()));
-		final ArrowTypeNode methodType = new ArrowTypeNode(parameterTypes, methodNode.getType());
-		final STentry methodEntry = new STentry(this.nestingLevel, methodType, this.decOffset);
-		virtualTable.put(methodNode.id, methodEntry);
-		methodNode.offset = this.decOffset;
-		this.decOffset++;
-		return null;
-	}
+    public Void visitNode(MethodNode methodNode) {
+        if (print) {
+            printNode(methodNode);
+        }
+
+        final Map<String, STentry> virtualTable = this.symTable.get(this.nestingLevel);
+        final List<TypeNode> parameterTypes = new ArrayList<>();
+        for (ParNode par : methodNode.parlist) {
+            parameterTypes.add(par.getType());
+        }
+        final ArrowTypeNode methodType = new ArrowTypeNode(parameterTypes, methodNode.getType());
+        final STentry methodEntry = new STentry(this.nestingLevel, methodType, this.decOffset);
+        virtualTable.put(methodNode.id, methodEntry);
+        methodNode.offset = this.decOffset;
+        this.decOffset++;
+        this.nestingLevel++;
+        Map<String, STentry> methodMap = new HashMap<>();
+        this.symTable.add(methodMap);
+        int prevDecOffset = this.decOffset;
+        this.decOffset = -2;
+        int parOffset = 1;
+
+        for (ParNode par : methodNode.parlist) {
+            if (methodMap.put(par.id, new STentry(this.nestingLevel, par.getType(), parOffset++)) != null) {
+                System.out.println("Par id " + par.id + " at line " + methodNode.getLine() + " already declared");
+                this.stErrors++;
+            }
+        }
+
+        for (Node dec : methodNode.declist) {
+            visit(dec);
+        }
+        visit(methodNode.exp);
+        this.symTable.remove(this.nestingLevel--);
+        this.decOffset = prevDecOffset;
+
+        return null;
+    }
 
     @Override
     public Void visitNode(NewNode newNode) {
@@ -298,31 +386,34 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
 
     @Override
     public Void visitNode(ClassCallNode classCallNode) {
-
         if (print) {
             printNode(classCallNode);
         }
 
         STentry entryId1 = stLookup(classCallNode.id1);
         if (entryId1 == null) {
-            System.out.println("ClassCallNide id1" + classCallNode.id1 + " at line " + classCallNode.getLine() + " not declared");
+            System.out.println("ClassCallNode id1 " + classCallNode.id1 + " at line " + classCallNode.getLine() + " not declared");
             stErrors++;
-
-        } else if (entryId1.type instanceof RefTypeNode) {
-
+        } else if (entryId1.type instanceof RefTypeNode refType) {
             classCallNode.entry = entryId1;
             classCallNode.nl = this.nestingLevel;
-            classCallNode.methodEntry = classTable.get(((RefTypeNode) entryId1.type).id).get(classCallNode.id2);
 
-            if (classCallNode.methodEntry == null) {
-                System.out.println("Id1 " + classCallNode.id1 + " at line " + classCallNode.getLine() + " has no method " + classCallNode.id2);
+            Map<String, STentry> classMap = classTable.get(refType.id);
+            if (classMap == null) {
+                System.out.println("Class " + refType.id + " at line " + classCallNode.getLine() + " not found in class table");
                 stErrors++;
+            } else {
+                classCallNode.methodEntry = classMap.get(classCallNode.id2);
+                if (classCallNode.methodEntry == null) {
+                    System.out.println("Id1 " + classCallNode.id1 + " at line " + classCallNode.getLine() + " has no method " + classCallNode.id2);
+                    stErrors++;
+                }
             }
-
         } else {
             System.out.println("Id1 " + classCallNode.id1 + " at line " + classCallNode.getLine() + " is not an object");
             stErrors++;
         }
+
         for (var elem : classCallNode.arglist) {
             visit(elem);
         }

@@ -247,7 +247,7 @@ public class AST {
 		}
 	}
 
-	public static class ClassNode extends Node {
+	public static class ClassNode extends DecNode {
 
 		final String id;
 		final List<FieldNode> fields;
@@ -312,7 +312,7 @@ public class AST {
 
 		@Override
 		public <S, E extends Exception> S accept(BaseASTVisitor<S, E> visitor) throws E {
-			return visitor.visit(this);
+			return visitor.visitNode(this);
 		}
 	}
 
