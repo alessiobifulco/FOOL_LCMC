@@ -301,7 +301,7 @@ public class TypeCheckEASTVisitor extends BaseEASTVisitor<TypeNode,TypeException
 		if (print) {
 			this.printNode(n);
 		}
-		TypeNode t = visit(n.entry);
+		TypeNode t = visit(n.methodEntry);
 		if ( !(t instanceof ArrowTypeNode) )
 			throw new TypeException("Invocation of a non-function " + n.id2, n.getLine());
 		ArrowTypeNode at = (ArrowTypeNode) t;
@@ -321,4 +321,27 @@ public class TypeCheckEASTVisitor extends BaseEASTVisitor<TypeNode,TypeException
 		return new EmptyTypeNode();
 	}
 
+    @Override
+    public TypeNode visitNode(RefTypeNode n) throws TypeException {
+        if (print) printNode(n);
+        return null;
+    }
+
+    @Override
+    public TypeNode visitNode(ClassTypeNode n) throws TypeException {
+        if (print) printNode(n);
+        for (var field : n.allFields) {
+            visit(field);
+        }
+        for (var method : n.allMethods) {
+            visit(method);
+        }
+        return null;
+    }
+
+    @Override
+    public TypeNode visitNode(EmptyTypeNode n) {
+        if (print) printNode(n);
+        return null;
+    }
 }
