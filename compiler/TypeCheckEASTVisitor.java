@@ -74,17 +74,24 @@ public class TypeCheckEASTVisitor extends BaseEASTVisitor<TypeNode,TypeException
 		return visit(n.exp);
 	}
 
-	@Override
-	public TypeNode visitNode(IfNode n) throws TypeException {
-		if (print) printNode(n);
-		if ( !(isSubtype(visit(n.cond), new BoolTypeNode())) )
-			throw new TypeException("Non boolean condition in if",n.getLine());
-		TypeNode t = visit(n.th);
-		TypeNode e = visit(n.el);
-		if (isSubtype(t, e)) return e;
-		if (isSubtype(e, t)) return t;
-		throw new TypeException("Incompatible types in then-else branches",n.getLine());
-	}
+    @Override
+    public TypeNode visitNode(IfNode n) throws TypeException {
+        if (print) printNode(n);
+
+        if (!(isSubtype(visit(n.cond), new BoolTypeNode()))) {
+            throw new TypeException("Non boolean condition in if", n.getLine());
+        }
+
+        TypeNode t = visit(n.th);
+        TypeNode e = visit(n.el);
+        TypeNode lca = TypeRels.lowestCommonAncestor(t, e);
+
+        if (lca == null) {
+            throw new TypeException("Incompatible types in then-else branches", n.getLine());
+        }
+
+        return lca;
+    }
 
 	@Override
 	public TypeNode visitNode(EqualNode n) throws TypeException {

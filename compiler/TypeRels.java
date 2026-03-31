@@ -44,5 +44,27 @@ public class TypeRels {
             }
             return true;
         }
-        return a.getClass().equals(b.getClass()) || ((a instanceof BoolTypeNode) && (b instanceof IntTypeNode));	}
+        return a.getClass().equals(b.getClass()) || ((a instanceof BoolTypeNode) && (b instanceof IntTypeNode));
+    }
+
+    public static TypeNode lowestCommonAncestor(TypeNode a, TypeNode b) {
+        if (a instanceof EmptyTypeNode) return b;
+        if (b instanceof EmptyTypeNode) return a;
+
+        if (a instanceof IntTypeNode && b instanceof BoolTypeNode) return a;
+        if (a instanceof BoolTypeNode && b instanceof IntTypeNode) return b;
+        if (a.getClass().equals(b.getClass())) return a;
+
+        if (a instanceof RefTypeNode && b instanceof RefTypeNode) {
+            String aId = ((RefTypeNode) a).id;
+
+            while (aId != null) {
+                if (isSubtype(b, new RefTypeNode(aId))) {
+                    return new RefTypeNode(aId);
+                }
+                aId = superType.get(aId);
+            }
+        }
+        return null;
+    }
 }
