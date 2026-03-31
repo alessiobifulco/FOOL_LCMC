@@ -276,6 +276,8 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
             this.classTable.put(classNode.id, new HashMap<>());
         }
 
+        TypeRels.superType.put(classNode.id, classNode.superId);
+
         this.nestingLevel++;
         final Map<String, STentry> classMap = this.classTable.get(classNode.id);
         this.symTable.add(classMap);
@@ -284,23 +286,74 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
         int fieldOffset = -1;
         this.decOffset = 0;
 
-        for (var field : classNode.fields) {
-            if (classMap.containsKey(field.id)) {
-                System.out.println("Field id " + field.id + " at line " + field.getLine() + " already declared");
+        if (classNode.superId != null){
+            if (!classTable.containsKey(classNode.superId)) {
+                System.out.println("Class id " + classNode.superId + " at line " + classNode.getLine() + " no exist");
                 this.stErrors++;
             }
-            classMap.put(field.id, new STentry(this.nestingLevel, field.getType(), fieldOffset--));
-            classType.allFields.add(field.getType());
+            STentry parentSTentry = symTable.getFirst().get(classNode.superId);
+            Map<String, STentry> parentMap = this.classTable.get(classNode.superId);
+
+            classNode.superEntry = parentSTentry;
+
+            ClassTypeNode parentTypeNode = (ClassTypeNode) parentSTentry.type;
+
+            classMap.putAll(parentMap);
+
+            classType.allFields.addAll(parentTypeNode.allFields);
+            classType.allMethods.addAll(parentTypeNode.allMethods);
+
+            fieldOffset = - (parentTypeNode.allFields.size() +1);
+            this.decOffset = parentTypeNode.allMethods.size();
+
+
         }
 
+        for (var field : classNode.fields) {
+            int offset;
+            if (classMap.containsKey(field.id)) {
+                STentry oldEntry = classMap.get(field.id);
+
+                if (oldEntry.type instanceof ArrowTypeNode) {
+                    System.out.println("Field " + field.id + " at line " + field.getLine() + " cannot override a method!");
+                    this.stErrors++;
+                    offset = fieldOffset--;
+                } else {
+                    offset = oldEntry.offset;
+                }
+            } else {
+                offset = fieldOffset--;
+            }
+
+            classMap.put(field.id, new STentry(this.nestingLevel, field.getType(), offset));
+
+            field.offset = offset;
+                if (-offset - 1 < classType.allFields.size()) {
+                classType.allFields.set(-offset - 1, field.getType());
+            } else {
+                classType.allFields.add(field.getType());
+            }
+        }
+
+        Set<String> localMethods = new HashSet<>();
+
         for (var method : classNode.methods) {
-            if (classMap.containsKey(method.id)) {
+
+            if (localMethods.contains(method.id)) {
                 System.out.println("Method id " + method.id + " at line " + method.getLine() + " already declared");
                 this.stErrors++;
+            } else {
+                localMethods.add(method.id);
             }
+
             visitNode(method);
             STentry methodEntry = classMap.get(method.id);
-            classType.allMethods.add((ArrowTypeNode) methodEntry.type);
+
+            if (methodEntry.offset < classType.allMethods.size()) {
+                classType.allMethods.set(methodEntry.offset, (ArrowTypeNode) methodEntry.type);
+            } else {
+                classType.allMethods.add((ArrowTypeNode) methodEntry.type);
+            }
         }
 
         this.symTable.remove(this.nestingLevel);
@@ -338,10 +391,20 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
             parameterTypes.add(par.getType());
         }
         final ArrowTypeNode methodType = new ArrowTypeNode(parameterTypes, methodNode.getType());
-        final STentry methodEntry = new STentry(this.nestingLevel, methodType, this.decOffset);
+
+        int offset;
+        if (virtualTable.containsKey(methodNode.id)) {
+
+            offset = virtualTable.get(methodNode.id).offset;
+        } else {
+            offset = this.decOffset;
+            this.decOffset++;
+        }
+
+        final STentry methodEntry = new STentry(this.nestingLevel, methodType, offset);
         virtualTable.put(methodNode.id, methodEntry);
-        methodNode.offset = this.decOffset;
-        this.decOffset++;
+        methodNode.offset = offset;
+
         this.nestingLevel++;
         Map<String, STentry> methodMap = new HashMap<>();
         this.symTable.add(methodMap);
@@ -417,6 +480,12 @@ public class SymbolTableASTVisitor extends BaseASTVisitor<Void,VoidException> {
         for (var elem : classCallNode.arglist) {
             visit(elem);
         }
+        return null;
+    }
+
+    @Override
+    public Void visitNode(EmptyNode n) {
+        if (print) printNode(n);
         return null;
     }
 }

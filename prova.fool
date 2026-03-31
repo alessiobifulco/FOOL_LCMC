@@ -1,8 +1,0 @@
-let
-  class Counter (v:int) {
-    fun getVal:int() v;
-    fun add:int(n:int) v + n;
-  }
-  var c:Counter = new Counter(10);
-in
-  print( c.add(5) == 15 );

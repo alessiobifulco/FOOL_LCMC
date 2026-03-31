@@ -390,10 +390,22 @@ public class CodeGenerationASTVisitor extends BaseASTVisitor<String, VoidExcepti
     @Override
     public String visitNode(final ClassNode n) {
         final List<String> dispatchTable = new ArrayList<>();
+
+        if (n.superEntry != null) {
+            int parentIndex = -n.superEntry.offset - 2;
+            List<String> parentTable = this.dispatchTables.get(parentIndex);
+            dispatchTable.addAll(parentTable);
+        }
+
         this.dispatchTables.add(dispatchTable);
-        for (int i = 0; i < n.methods.size(); i++) {
-            visit(n.methods.get(i));
-            dispatchTable.add(n.methods.get(i).label);
+
+        for (var method : n.methods) {
+            visit(method);
+            if (method.offset < dispatchTable.size()) {
+                dispatchTable.set(method.offset, method.label);
+            } else {
+                dispatchTable.add(method.label);
+            }
         }
         String dispatchTableCreation = null;
         for (var label: dispatchTable) {

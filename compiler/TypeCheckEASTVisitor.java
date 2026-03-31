@@ -4,6 +4,7 @@ import compiler.AST.*;
 import compiler.exc.*;
 import compiler.lib.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import static compiler.TypeRels.*;
@@ -244,14 +245,44 @@ public class TypeCheckEASTVisitor extends BaseEASTVisitor<TypeNode,TypeException
 
 	@Override
 	public TypeNode visitNode(final ClassNode n) throws TypeException {
-		if (print) {
-			printNode(n);
-		}
-		// Visit all class methods
-		for (final var method: n.methods) {
-			visit(method);
-		}
-		return null;
+        if (print) {
+            printNode(n);
+        }
+        if (n.superEntry != null) {
+            ClassTypeNode parentCT = (ClassTypeNode) n.superEntry.type;
+
+            for (var field : n.fields) {
+                int position = -field.offset - 1;
+
+                if (position < parentCT.allFields.size()) {
+                    if (!isSubtype(field.getType(), parentCT.allFields.get(position))) {
+                        throw new TypeException("Wrong type for overridden field " + field.id, field.getLine());
+                    }
+                }
+            }
+
+            for (var method : n.methods) {
+                int position = method.offset;
+
+                if (position < parentCT.allMethods.size()) {
+                    List<TypeNode> parTypes = new ArrayList<>();
+                    for (var par : method.parlist) {
+                        parTypes.add(par.getType());
+                    }
+                    ArrowTypeNode childMethodType = new ArrowTypeNode(parTypes, method.getType());
+
+                    if (!isSubtype(childMethodType, parentCT.allMethods.get(position))) {
+                        throw new TypeException("Wrong type for overridden method " + method.id, method.getLine());
+                    }
+                }
+            }
+        }
+
+        for (final var method: n.methods) {
+            visit(method);
+        }
+
+        return null;
 	}
 
 	@Override

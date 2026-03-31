@@ -246,10 +246,18 @@ public class ASTGenerationSTVisitor extends FOOLBaseVisitor<Node> {
         if (print) {
             printVarAndProdName(c);
         }
+        String superID = null;
         String classID = c.ID(0).getText();
         List<FieldNode> fields = new ArrayList<>();
-        for (int i = 1; i < c.ID().size(); i++) {
-            TypeNode fieldType = (TypeNode) visit(c.type(i - 1));
+        int exptendingPad = 1;
+
+        if (c.EXTENDS() != null){
+            superID =  c.ID(1).getText();
+            exptendingPad = 2;
+        }
+
+        for (int i = exptendingPad; i < c.ID().size(); i++) {
+            TypeNode fieldType = (TypeNode) visit(c.type(i - exptendingPad));
 
             FieldNode field = new FieldNode(c.ID(i).getText(), fieldType);
             field.setLine(c.ID(i).getSymbol().getLine());
@@ -259,7 +267,7 @@ public class ASTGenerationSTVisitor extends FOOLBaseVisitor<Node> {
         for (var method : c.methdec()) {
             methods.add((MethodNode) visit(method));
         }
-        ClassNode n = new ClassNode(classID, fields, methods);
+        ClassNode n = new ClassNode(classID, fields, methods, superID);
         n.setLine(c.ID(0).getSymbol().getLine());
 
         return n;
@@ -333,6 +341,14 @@ public class ASTGenerationSTVisitor extends FOOLBaseVisitor<Node> {
             n = new RefTypeNode(c.ID().getText());
             n.setLine(c.ID().getSymbol().getLine());
         }
+        return n;
+    }
+
+    @Override
+    public Node visitNot(NotContext c) {
+        Node expNode = visit(c.exp());
+        NotNode n = new NotNode(expNode);
+        n.setLine(c.NOT().getSymbol().getLine());
         return n;
     }
 }

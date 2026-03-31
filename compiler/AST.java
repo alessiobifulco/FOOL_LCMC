@@ -235,6 +235,7 @@ public class AST {
 
 	public static class FieldNode extends DecNode {
 		final String id;
+        int offset;
 
 		public FieldNode(final String id, final TypeNode type) {
 			this.id = id;
@@ -252,8 +253,11 @@ public class AST {
 		final String id;
 		final List<FieldNode> fields;
         final List<MethodNode> methods;
+        final String superId;
+        STentry superEntry;
 
-		public ClassNode(final String id, final List<FieldNode> fields, final List<MethodNode> methods) {
+		public ClassNode(final String id, final List<FieldNode> fields, final List<MethodNode> methods, final String superId) {
+            this.superId = superId;
 			this.id = id;
 			this.fields = fields;
             this.methods = methods;
