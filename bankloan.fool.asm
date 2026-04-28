@@ -248,6 +248,8 @@ add
 lw
 js
 add
+sub
+push 0
 bleq label2
 push 0
 b label3
@@ -317,6 +319,8 @@ push 0
 add
 lw
 js
+sub
+push 0
 bleq label6
 push 0
 b label7
